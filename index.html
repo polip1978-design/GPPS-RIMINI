@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#245b45">
+<title>GPPS Rimini</title>
+<style>
+:root{--g:#245b45;--p:#f3f6f3;--line:#d6dfd8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--p);color:#203027;font:16px system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:var(--g);color:white;padding:20px}
+h1{margin:0;font-size:25px}
+main{max-width:680px;margin:auto;padding:14px}
+.card{background:white;border:1px solid var(--line);border-radius:14px;padding:15px;margin-bottom:13px}
+h2{font-size:18px;margin:0 0 10px}
+label{display:block;font-weight:650;font-size:14px;margin:10px 0 5px}
+input{width:100%;padding:12px;border:1px solid #b9c8be;border-radius:8px;font:inherit}
+.choices{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+button{padding:12px;border:1px solid var(--line);border-radius:9px;background:#e8f0ea;color:#203027;font:600 15px system-ui}
+.choices button.on{background:var(--g);color:white}
+.primary{width:100%;background:var(--g);color:white;border:0;margin-top:8px}
+.muted{font-size:13px;color:#627168}
+.entry{padding:10px 0;border-top:1px solid var(--line)}
+.warning{background:#fff6d9;padding:12px;border-radius:9px;font-size:13px;line-height:1.45}
+.danger{background:#f8e6e3;color:#8a3028;margin-top:10px}
+</style>
+</head>
+<body>
+<header><h1>GPPS Rimini</h1><div>Registro attività del personale</div></header>
+<main>
+<section class="card">
+<h2>Nuova registrazione</h2>
+<label for="name">Operatore</label><input id="name" placeholder="Nome e cognome" autocomplete="name">
+<label for="date">Data</label><input id="date" type="date">
+<p class="muted">La data è impostata automaticamente a oggi e può essere modificata.</p>
+</section>
+<section class="card"><h2>1. Turni</h2><div class="choices" id="turni"><button type="button" data-v="Mattina">Mattina</button><button type="button" data-v="Pomeriggio">Pomeriggio</button></div></section>
+<section class="card"><h2>2. Ferie e permessi</h2><div class="choices" id="ferie">
+<button type="button" data-v="C.O.">C.O.</button><button type="button" data-v="C.L.">C.L.</button>
+<button type="button" data-v="C.S.">C.S.</button><button type="button" data-v="Parentale">Parentale</button>
+<button type="button" data-v="104">104</button><button type="button" data-v="R.R.">R.R.</button>
+</div></section>
+<section class="card"><h2>3. O.P.</h2>
+<label>Luogo</label><div class="choices" id="luogo"><button type="button" data-v="In sede">In sede</button><button type="button" data-v="Fuori sede">Fuori sede</button></div>
+<label>Turno</label><div class="choices" id="opturno"><button type="button" data-v="M">M – Mattina</button><button type="button" data-v="P">P – Pomeriggio</button><button type="button" data-v="S">S – Sera</button><button type="button" data-v="N">N – Notte</button></div>
+</section>
+<section class="card"><h2>4. Sopralluoghi</h2>
+<label for="nemesi">Nr. Nemesi</label><input id="nemesi" inputmode="numeric" placeholder="Numero Nemesi">
+<label for="titolo">Titolo / descrizione breve</label><input id="titolo" maxlength="120" placeholder="Inserisci un titolo">
+</section>
+<section class="card"><button class="primary" id="save" type="button">Registra attività</button><p class="muted">Puoi selezionare più attività per la stessa data.</p></section>
+<section class="card"><h2>Registrazioni salvate</h2><div id="records" class="muted">Nessuna registrazione.</div>
+<button id="csv" type="button">Esporta CSV</button> <button id="clear" class="danger" type="button">Cancella tutte</button></section>
+<div class="warning"><b>Attenzione:</b> questa prima versione salva i dati solo nel browser di questo dispositivo e non li condivide con altri telefoni. Il sito GitHub è pubblico: usa solo dati di prova, senza informazioni personali o riservate degli operatori. Per l'uso reale condiviso servirà un accesso protetto e un database.</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const today=()=>{let d=new Date();return new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
+$('date').value=today();
+$('name').value=localStorage.getItem('gpps_name')||'';
+const selected={};
+['turni','ferie','luogo','opturno'].forEach(id=>$(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{
+ if(id==='ferie'){b.classList.toggle('on');selected[id]=[...$(id).querySelectorAll('.on')].map(x=>x.dataset.v)}
+ else{$(id).querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');selected[id]=b.dataset.v}
+}));
+const getRecords=()=>JSON.parse(localStorage.getItem('gpps_records')||'[]');
+function render(){const a=getRecords();$('records').innerHTML='';if(!a.length){$('records').textContent='Nessuna registrazione.';return}
+a.slice().reverse().forEach(r=>{const d=document.createElement('div');d.className='entry';const b=document.createElement('b');b.textContent=r.date+' · '+r.name;const p=document.createElement('div');p.textContent=r.items.join(' | ');d.append(b,p);$('records').append(d)})}
+$('save').onclick=()=>{
+ const name=$('name').value.trim();if(!name){alert('Inserisci il nome dell’operatore.');$('name').focus();return}
+ localStorage.setItem('gpps_name',name);const items=[];
+ if(selected.turni)items.push('Turno: '+selected.turni);
+ if(selected.ferie?.length)items.push('Ferie/permessi: '+selected.ferie.join(', '));
+ if(selected.luogo||selected.opturno){if(!selected.luogo||!selected.opturno){alert('Per O.P. seleziona luogo e turno.');return}items.push('O.P.: '+selected.luogo+' – '+selected.opturno)}
+ if($('nemesi').value.trim()||$('titolo').value.trim())items.push('Sopralluogo: Nemesi '+$('nemesi').value.trim()+' – '+$('titolo').value.trim());
+ if(!items.length){alert('Seleziona almeno un’attività.');return}
+ const a=getRecords();a.push({name,date:$('date').value||today(),items});localStorage.setItem('gpps_records',JSON.stringify(a));
+ document.querySelectorAll('.on').forEach(x=>x.classList.remove('on'));Object.keys(selected).forEach(k=>delete selected[k]);
+ $('nemesi').value='';$('titolo').value='';render();alert('Registrazione salvata su questo dispositivo.')
+};
+$('csv').onclick=()=>{
+ const a=getRecords();if(!a.length){alert('Nessun dato da esportare.');return}
+ const rows=[['Data','Operatore','Attività'],...a.map(r=>[r.date,r.name,r.items.join(' | ')])];
+ const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');
+ const u=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const x=document.createElement('a');x.href=u;x.download='GPPS-Rimini.csv';x.click();URL.revokeObjectURL(u)
+};
+$('clear').onclick=()=>{if(confirm('Cancellare tutte le registrazioni su questo dispositivo?')){localStorage.removeItem('gpps_records');render()}};
+render();
+</script>
+</body></html>
