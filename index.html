@@ -33,6 +33,11 @@ button{padding:12px;border:1px solid var(--line);border-radius:9px;background:#e
 .entry-actions{display:flex;gap:6px;flex:0 0 auto}.edit-one{padding:8px 10px;background:#e6f1f9;color:#145d91;border-color:#b7d3e5}.delete-one{padding:8px 10px;background:#fbe9e8;color:#9b302a;border-color:#efc7c4}
 .warning{background:#fff6d9;padding:12px;border-radius:9px;font-size:13px;line-height:1.45}
 .danger{background:#f8e6e3;color:#8a3028;margin-top:10px}
+.photo-preview{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.photo-preview img{width:82px;height:82px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.photo-info{min-width:0;flex:1}.photo-info b{display:block}.photo-info small{color:#627887;display:block;overflow-wrap:anywhere}
+.photo-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.photo-actions button{padding:8px 10px;font-size:13px}
+.photo-upload{margin-top:8px}.photo-empty{font-size:13px;color:#627887;padding:8px 0}
 @media(max-width:420px){header{padding:10px 13px}.logo{width:56px;height:56px}h1{font-size:22px}}
 </style>
 </head>
@@ -72,6 +77,25 @@ button{padding:12px;border:1px solid var(--line);border-radius:9px;background:#e
 <section class="card"><button class="primary" id="save" type="button">Registra attività</button><button id="cancelEdit" type="button" style="display:none;width:100%;margin-top:8px">Annulla modifica</button><p class="muted" id="formHint">Puoi selezionare più attività per la stessa data.</p></section>
 <section class="card"><h2>Registrazioni salvate</h2><div id="records" class="muted">Nessuna registrazione.</div>
 <button id="csv" type="button">Esporta CSV</button> <button id="clear" class="danger" type="button">Cancella tutte</button></section>
+<section class="card" id="personalPhotos">
+<h2>5. Archivio personale delle turnazioni</h2>
+<p class="muted">Le fotografie vengono salvate solo nella memoria di questo browser e su questo dispositivo. Non vengono caricate su GitHub né condivise con gli altri operatori.</p>
+<div class="card" style="margin:10px 0;background:#f8fbfe">
+<h2>TURNI SETTIMANALI</h2>
+<label for="weeklyPeriod">Settimana di riferimento (seleziona il lunedì)</label><input id="weeklyPeriod" type="date">
+<label for="weeklyPhoto">Fotografia dei turni</label><input class="photo-upload" id="weeklyPhoto" type="file" accept="image/*">
+<button class="primary" id="saveWeeklyPhoto" type="button">Salva nei miei turni settimanali</button>
+<div id="weeklyArchive"></div>
+</div>
+<div class="card" style="margin:10px 0;background:#f8fbfe">
+<h2>PROGRAMMAZIONE MENSILE</h2>
+<label for="monthlyPeriod">Mese di riferimento</label><input id="monthlyPeriod" type="month">
+<label for="monthlyPhoto">Fotografia della programmazione</label><input class="photo-upload" id="monthlyPhoto" type="file" accept="image/*">
+<button class="primary" id="saveMonthlyPhoto" type="button">Salva nella programmazione mensile</button>
+<div id="monthlyArchive"></div>
+</div>
+<p class="muted">Le fotografie sono associate al nome inserito nell'app, ma il nome non è una password. Chi usa lo stesso browser e dispositivo potrebbe vederle. Se cancelli i dati del browser, cambi dispositivo o browser, potresti perderle. Conserva anche una copia originale delle immagini.</p>
+</section>
 <div class="warning"><b>Attenzione:</b> questa versione salva i dati solo nel browser di questo dispositivo e non li condivide con altri telefoni. Il sito GitHub è pubblico: usa solo dati di prova, senza informazioni personali o riservate degli operatori. Per l'uso reale condiviso servirà un accesso protetto e un database.</div>
 </main>
 <script>
@@ -112,6 +136,18 @@ $('save').onclick=()=>{
 $('cancelEdit').onclick=()=>{resetForm();render()};
 $('csv').onclick=()=>{const a=getRecords();if(!a.length){alert('Nessun dato da esportare.');return}const rows=[['Data','Operatore','Attività'],...a.map(r=>[r.date,r.name,(r.items||[]).join(' | ')])];const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');const u=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const x=document.createElement('a');x.href=u;x.download='GPPS-Rimini.csv';x.click();URL.revokeObjectURL(u)};
 $('clear').onclick=()=>{if(confirm('Cancellare tutte le registrazioni su questo dispositivo?')){localStorage.removeItem('gpps_records');render()}};
-render();
+// Archivio fotografico personale: IndexedDB locale, senza invio al server.
+const PHOTO_DB='gpps_personal_photos',PHOTO_STORE='photos';
+function openPhotoDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open(PHOTO_DB,1);req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(PHOTO_STORE))db.createObjectStore(PHOTO_STORE,{keyPath:'id'})};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+function photoOwner(){return $('name').value.trim().toLocaleLowerCase('it-IT')}
+function photoRequest(mode,work){return openPhotoDB().then(db=>new Promise((resolve,reject)=>{const tx=db.transaction(PHOTO_STORE,mode);const store=tx.objectStore(PHOTO_STORE);let result;try{result=work(store)}catch(e){db.close();reject(e);return}tx.oncomplete=()=>{db.close();resolve(result?.result)};tx.onerror=()=>{db.close();reject(tx.error)};tx.onabort=()=>{db.close();reject(tx.error)}}))}
+async function listPhotos(kind){const db=await openPhotoDB();return new Promise((resolve,reject)=>{const tx=db.transaction(PHOTO_STORE,'readonly');const req=tx.objectStore(PHOTO_STORE).getAll();req.onsuccess=()=>{const owner=photoOwner();resolve(req.result.filter(x=>x.owner===owner&&x.kind===kind).sort((a,b)=>b.period.localeCompare(a.period)))};req.onerror=()=>reject(req.error);tx.oncomplete=()=>db.close()})}
+function addPhotoRow(container,item){const row=document.createElement('div');row.className='photo-preview';const img=document.createElement('img');const url=URL.createObjectURL(item.blob);img.src=url;img.alt='Anteprima '+item.period;const info=document.createElement('div');info.className='photo-info';const title=document.createElement('b');title.textContent=item.period;const detail=document.createElement('small');detail.textContent=item.name;info.append(title,detail);const actions=document.createElement('div');actions.className='photo-actions';const open=document.createElement('button');open.type='button';open.textContent='Apri';open.onclick=()=>window.open(url,'_blank');const del=document.createElement('button');del.type='button';del.className='delete-one';del.textContent='Elimina';del.onclick=async()=>{if(!confirm('Eliminare questa fotografia dall’archivio di questo dispositivo?'))return;await photoRequest('readwrite',st=>st.delete(item.id));URL.revokeObjectURL(url);await renderPhotoArchives()};actions.append(open,del);info.append(actions);row.append(img,info);container.append(row)}
+async function renderPhotoArchives(){const owner=photoOwner();$('weeklyArchive').innerHTML='';$('monthlyArchive').innerHTML='';if(!owner){$('weeklyArchive').textContent='Inserisci prima il nome dell’operatore nella sezione iniziale.';$('monthlyArchive').textContent='Inserisci prima il nome dell’operatore nella sezione iniziale.';return}try{const [weekly,monthly]=await Promise.all([listPhotos('weekly'),listPhotos('monthly')]);for(const [items,id] of [[weekly,'weeklyArchive'],[monthly,'monthlyArchive']]){const box=$(id);if(!items.length){const empty=document.createElement('div');empty.className='photo-empty';empty.textContent='Nessuna fotografia archiviata.';box.append(empty)}else items.forEach(item=>addPhotoRow(box,item))}}catch(e){console.error(e);alert('Non è stato possibile leggere l’archivio fotografico del browser.')}}
+async function savePersonalPhoto(kind){const owner=photoOwner();if(!owner){alert('Inserisci prima il nome dell’operatore nella sezione iniziale.');$('name').focus();return}const weekly=kind==='weekly',input=$(weekly?'weeklyPhoto':'monthlyPhoto'),period=$(weekly?'weeklyPeriod':'monthlyPeriod'),file=input.files[0];if(!file){alert('Seleziona prima una fotografia.');return}if(!file.type.startsWith('image/')){alert('Seleziona un file immagine.');return}if(file.size>8*1024*1024){alert('La fotografia supera 8 MB. Riduci le dimensioni dell’immagine e riprova.');return}if(!period.value){alert('Indica il periodo di riferimento.');period.focus();return}try{const item={id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2),owner,kind,period:period.value,name:file.name,blob:file,createdAt:new Date().toISOString()};await photoRequest('readwrite',st=>st.add(item));input.value='';await renderPhotoArchives();alert('Fotografia salvata solo su questo dispositivo.')}catch(e){console.error(e);alert('Salvataggio non riuscito. Potrebbe mancare spazio disponibile nel browser.')}}
+$('saveWeeklyPhoto').onclick=()=>savePersonalPhoto('weekly');$('saveMonthlyPhoto').onclick=()=>savePersonalPhoto('monthly');
+$('weeklyPeriod').value=today();$('monthlyPeriod').value=today().slice(0,7);
+$('name').addEventListener('change',renderPhotoArchives);$('name').addEventListener('blur',renderPhotoArchives);
+render();renderPhotoArchives();
 </script>
 </body></html>
