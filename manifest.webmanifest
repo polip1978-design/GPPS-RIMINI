@@ -1,0 +1,17 @@
+{
+  "name": "GPPS Rimini",
+  "short_name": "GPPS",
+  "start_url": "/GPPS-RIMINI/",
+  "scope": "/GPPS-RIMINI/",
+  "display": "standalone",
+  "background_color": "#f1f7fc",
+  "theme_color": "#1677bd",
+  "icons": [
+    {
+      "src": "logo.jpg",
+      "sizes": "any",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}
