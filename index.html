@@ -3,31 +3,38 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#245b45">
+<meta name="theme-color" content="#1677bd">
 <title>GPPS Rimini</title>
 <style>
-:root{--g:#245b45;--p:#f3f6f3;--line:#d6dfd8}
+:root{--g:#1677bd;--p:#f1f7fc;--line:#d2e1ed;--ink:#203342}
 *{box-sizing:border-box}
-body{margin:0;background:var(--p);color:#203027;font:16px system-ui,-apple-system,Segoe UI,sans-serif}
-header{background:var(--g);color:white;padding:20px}
-h1{margin:0;font-size:25px}
+body{margin:0;background:var(--p);color:var(--ink);font:16px system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:var(--g);color:white;padding:12px 18px;display:flex;align-items:center;gap:13px}
+.logo{width:66px;height:66px;object-fit:contain;border-radius:50%;background:white;flex:0 0 auto}
+h1{margin:0;font-size:25px}header div.sub{font-size:14px;opacity:.95}
 main{max-width:680px;margin:auto;padding:14px}
 .card{background:white;border:1px solid var(--line);border-radius:14px;padding:15px;margin-bottom:13px}
 h2{font-size:18px;margin:0 0 10px}
 label{display:block;font-weight:650;font-size:14px;margin:10px 0 5px}
-input{width:100%;padding:12px;border:1px solid #b9c8be;border-radius:8px;font:inherit}
+input,select{width:100%;padding:12px;border:1px solid #b7cddd;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}
 .choices{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-button{padding:12px;border:1px solid var(--line);border-radius:9px;background:#e8f0ea;color:#203027;font:600 15px system-ui}
-.choices button.on{background:var(--g);color:white}
+button{padding:12px;border:1px solid var(--line);border-radius:9px;background:#e6f1f9;color:var(--ink);font:600 15px system-ui;cursor:pointer}
+.choices button.on{background:var(--g);color:white;border-color:var(--g)}
 .primary{width:100%;background:var(--g);color:white;border:0;margin-top:8px}
-.muted{font-size:13px;color:#627168}
-.entry{padding:10px 0;border-top:1px solid var(--line)}
+.rep{width:100%;background:#e6f1f9;color:#145d91;border:1px solid #8bbbdc}
+.rep.on{background:var(--g);color:white;border-color:var(--g)}
+.muted{font-size:13px;color:#627887}
+.rep-count{margin:8px 0 0;font-size:14px;font-weight:650;color:#145d91}
+.entry{padding:11px 0;border-top:1px solid var(--line);display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.entry-main{min-width:0;flex:1}.entry-main div{overflow-wrap:anywhere;margin-top:4px}
+.entry-actions{display:flex;gap:6px;flex:0 0 auto}.edit-one{padding:8px 10px;background:#e6f1f9;color:#145d91;border-color:#b7d3e5}.delete-one{padding:8px 10px;background:#fbe9e8;color:#9b302a;border-color:#efc7c4}
 .warning{background:#fff6d9;padding:12px;border-radius:9px;font-size:13px;line-height:1.45}
 .danger{background:#f8e6e3;color:#8a3028;margin-top:10px}
+@media(max-width:420px){header{padding:10px 13px}.logo{width:56px;height:56px}h1{font-size:22px}}
 </style>
 </head>
 <body>
-<header><h1>GPPS Rimini</h1><div>Registro attività del personale</div></header>
+<header><img class="logo" alt="Logo Polizia Scientifica" src="logo.jpg"><div><h1>GPPS Rimini</h1><div class="sub">Registro attività del personale</div></div></header>
 <main>
 <section class="card">
 <h2>Nuova registrazione</h2>
@@ -35,11 +42,12 @@ button{padding:12px;border:1px solid var(--line);border-radius:9px;background:#e
 <label for="date">Data</label><input id="date" type="date">
 <p class="muted">La data è impostata automaticamente a oggi e può essere modificata.</p>
 </section>
-<section class="card"><h2>1. Turni</h2><div class="choices" id="turni"><button type="button" data-v="Mattina">Mattina</button><button type="button" data-v="Pomeriggio">Pomeriggio</button></div></section>
+<section class="card"><h2>1. Turni</h2><div class="choices" id="turni"><button type="button" data-v="Mattina">Mattina</button><button type="button" data-v="Pomeriggio">Pomeriggio</button></div>
+<div style="margin-top:9px"><button type="button" class="rep" id="rep" aria-pressed="false">REP.</button><div class="rep-count" id="repCount">Reperibilità mese: 0 di 5 · Totale anno: 0 di 52</div></div></section>
 <section class="card"><h2>2. Ferie e permessi</h2><div class="choices" id="ferie">
 <button type="button" data-v="C.O.">C.O.</button><button type="button" data-v="C.L.">C.L.</button>
 <button type="button" data-v="C.S.">C.S.</button><button type="button" data-v="Parentale">Parentale</button>
-<button type="button" data-v="104">104</button><button type="button" data-v="R.R.">R.R.</button>
+<button type="button" data-v="R.S.">R.S.</button><button type="button" data-v="R.R.">R.R.</button>
 </div></section>
 <section class="card"><h2>3. O.P.</h2>
 <label>Luogo</label><div class="choices" id="luogo"><button type="button" data-v="In sede">In sede</button><button type="button" data-v="Fuori sede">Fuori sede</button></div>
@@ -47,44 +55,59 @@ button{padding:12px;border:1px solid var(--line);border-radius:9px;background:#e
 </section>
 <section class="card"><h2>4. Sopralluoghi</h2>
 <label for="nemesi">Nr. Nemesi</label><input id="nemesi" inputmode="numeric" placeholder="Numero Nemesi">
-<label for="titolo">Titolo / descrizione breve</label><input id="titolo" maxlength="120" placeholder="Inserisci un titolo">
+<label for="tipologia">Tipologia</label><select id="tipologia"><option value="">Seleziona una tipologia</option>
+<option>Accertamenti di P.G.</option><option>Rilievi sulle Persone</option><option>Ricerca impronte papillari</option><option>Ispezioni dei luoghi e delle cose</option><option>Ricerca residui dello sparo</option><option>Rilievi fotografici</option><option>Perquisizione</option>
+<option>Autopsia</option><option>Rilievi su cadavere</option><option>Rinvenimento cadavere</option><option>Suicidio presunto</option><option>Rinvenimento di resti umani</option>
+<option>Danneggiamento</option><option>Danneggiamento seguito da incendio</option><option>Danneggiamento di sistemi informatici</option><option>Danneggiamento al patrimonio archeologico, storico o artistico nazionale</option><option>Distruzione o deterioramento di habitat all'interno di un sito protetto</option><option>Distruzione o deturpamento di bellezze naturali</option><option>Deturpamento o imbrattamento di cose</option><option>Furto</option><option>Furto in abitazione</option><option>Rapina</option><option>Scritte Murali</option><option>Tentata rapina</option><option>Tentato furto</option><option>Truffa</option><option>Possesso ingiustificato di valori</option><option>Uccisione o danneggiamento di animali</option><option>Violazione di domicilio</option>
+<option>Atti persecutori</option><option>Detenzione abusiva di armi</option><option>Minaccia</option><option>Lesioni</option><option>Rissa</option><option>Maltrattamenti in famiglia</option><option>Omicidio</option><option>Omicidio stradale</option><option>Sequestro di persona</option><option>Tentato omicidio</option><option>Tentato suicidio</option><option>Violenza sessuale</option><option>Strage</option>
+<option>Incendio</option><option>Incendio in edificio</option><option>Incendio su veicolo</option>
+<option>Disastro</option><option>Incidente aereo</option><option>Incidente domestico</option><option>Incidente ferroviario</option><option>Incidente navale</option><option>Incidente stradale</option><option>Incidente sul lavoro</option><option>Esplosione a seguito di fuga di gas</option><option>Esplosione</option>
+<option>Apertura plico e corrispondenza</option><option>Rinvenimento di materiale pornografico</option><option>Rinvenimento di armi</option><option>Rinvenimento di natante</option><option>Rinvenimento di ordigno/esplosivo</option><option>Fabbricazione o commercio abusivi di materie esplodenti</option><option>Rinvenimento di materiale pirotecnico</option><option>Rinvenimento di sostanza stupefacente</option><option>Rinvenimento di striscione</option><option>Rinvenimento di materiale biologico</option><option>Rinvenimento di manufatti balistici</option><option>Rinvenimento merce contraffatta</option><option>Rinvenimento munizionamento</option><option>Rinvenimento di veicoli</option><option>Rinvenimento di oggetti di provenienza illecita</option><option>Rinvenimento di oggetti atti allo scasso</option>
+<option>Occultamento di cadavere</option><option>Vilipendio di cadavere</option><option>Violazione di sepolcro</option>
+</select>
 </section>
-<section class="card"><button class="primary" id="save" type="button">Registra attività</button><p class="muted">Puoi selezionare più attività per la stessa data.</p></section>
+<section class="card"><button class="primary" id="save" type="button">Registra attività</button><button id="cancelEdit" type="button" style="display:none;width:100%;margin-top:8px">Annulla modifica</button><p class="muted" id="formHint">Puoi selezionare più attività per la stessa data.</p></section>
 <section class="card"><h2>Registrazioni salvate</h2><div id="records" class="muted">Nessuna registrazione.</div>
 <button id="csv" type="button">Esporta CSV</button> <button id="clear" class="danger" type="button">Cancella tutte</button></section>
-<div class="warning"><b>Attenzione:</b> questa prima versione salva i dati solo nel browser di questo dispositivo e non li condivide con altri telefoni. Il sito GitHub è pubblico: usa solo dati di prova, senza informazioni personali o riservate degli operatori. Per l'uso reale condiviso servirà un accesso protetto e un database.</div>
+<div class="warning"><b>Attenzione:</b> questa versione salva i dati solo nel browser di questo dispositivo e non li condivide con altri telefoni. Il sito GitHub è pubblico: usa solo dati di prova, senza informazioni personali o riservate degli operatori. Per l'uso reale condiviso servirà un accesso protetto e un database.</div>
 </main>
 <script>
 const $=id=>document.getElementById(id);
 const today=()=>{let d=new Date();return new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
-$('date').value=today();
-$('name').value=localStorage.getItem('gpps_name')||'';
-const selected={};
+$('date').value=today();$('name').value=localStorage.getItem('gpps_name')||'';
+const selected={};let editingIndex=null;
 ['turni','ferie','luogo','opturno'].forEach(id=>$(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{
  if(id==='ferie'){b.classList.toggle('on');selected[id]=[...$(id).querySelectorAll('.on')].map(x=>x.dataset.v)}
  else{$(id).querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');selected[id]=b.dataset.v}
 }));
+$('rep').onclick=()=>{$('rep').classList.toggle('on');selected.rep=$('rep').classList.contains('on');$('rep').setAttribute('aria-pressed',String(selected.rep));updateRepCount()};
 const getRecords=()=>JSON.parse(localStorage.getItem('gpps_records')||'[]');
-function render(){const a=getRecords();$('records').innerHTML='';if(!a.length){$('records').textContent='Nessuna registrazione.';return}
-a.slice().reverse().forEach(r=>{const d=document.createElement('div');d.className='entry';const b=document.createElement('b');b.textContent=r.date+' · '+r.name;const p=document.createElement('div');p.textContent=r.items.join(' | ');d.append(b,p);$('records').append(d)})}
+function repDates(records){const out=new Set();records.forEach(r=>{if((r.items||[]).some(x=>/^Reperibilità \(REP\.\)$/.test(x)||x==='REP.'))out.add(r.date)});return out}
+function updateRepCount(){const date=$('date').value||today(),year=date.slice(0,4),month=date.slice(0,7),dates=repDates(getRecords());if(selected.rep)dates.add(date);const annual=[...dates].filter(x=>x&&x.slice(0,4)===year).length;const monthly=[...dates].filter(x=>x&&x.slice(0,7)===month).length;$('repCount').textContent=`Reperibilità mese: ${monthly} di 5 · Totale anno: ${annual} di 52`}
+$('date').addEventListener('change',updateRepCount);
+function resetForm(){Object.keys(selected).forEach(k=>delete selected[k]);document.querySelectorAll('.choices .on').forEach(x=>x.classList.remove('on'));$('rep').classList.remove('on');$('rep').setAttribute('aria-pressed','false');$('nemesi').value='';$('tipologia').value='';$('date').value=today();$('name').value=localStorage.getItem('gpps_name')||'';editingIndex=null;$('save').textContent='Registra attività';$('cancelEdit').style.display='none';$('formHint').textContent='Puoi selezionare più attività per la stessa data.';updateRepCount()}
+function startEdit(index){const a=getRecords(),r=a[index];if(!r)return;resetForm();editingIndex=index;$('name').value=r.name||'';$('date').value=r.date||today();(r.items||[]).forEach(item=>{
+ if(item.startsWith('Turno: ')){const v=item.slice(7);const b=[...$('turni').querySelectorAll('button')].find(x=>x.dataset.v===v);if(b){b.classList.add('on');selected.turni=v}}
+ else if(item==='Reperibilità (REP.)'||item==='REP.'){selected.rep=true;$('rep').classList.add('on');$('rep').setAttribute('aria-pressed','true')}
+ else if(item.startsWith('Ferie/permessi: ')){const vals=item.slice(16).split(', ').filter(Boolean);selected.ferie=vals;[...$('ferie').querySelectorAll('button')].forEach(b=>{if(vals.includes(b.dataset.v))b.classList.add('on')})}
+ else if(item.startsWith('O.P.: ')){const m=item.match(/^O\.P\.: (.*?) – (.*)$/);if(m){selected.luogo=m[1];selected.opturno=m[2];[...$('luogo').querySelectorAll('button')].forEach(b=>{if(b.dataset.v===m[1])b.classList.add('on')});[...$('opturno').querySelectorAll('button')].forEach(b=>{if(b.dataset.v===m[2])b.classList.add('on')})}}
+ else if(item.startsWith('Sopralluogo: ')){const old=item.match(/^Sopralluogo: Nemesi (.*?) – (?:Tipologia: )?(.*)$/);if(old){$('nemesi').value=old[1]==='-'?'':old[1];const val=old[2]||'';const option=[...$('tipologia').options].find(o=>o.value===val);if(option)$('tipologia').value=val}}
+ });$('save').textContent='Salva modifiche';$('cancelEdit').style.display='block';$('formHint').textContent='Stai modificando una registrazione esistente.';updateRepCount();$('name').scrollIntoView({behavior:'smooth',block:'start'})}
+function render(){const a=getRecords();$('records').innerHTML='';if(!a.length){$('records').textContent='Nessuna registrazione.';updateRepCount();return}
+a.slice().reverse().forEach((r,revIndex)=>{const index=a.length-1-revIndex;const d=document.createElement('div');d.className='entry';const main=document.createElement('div');main.className='entry-main';const b=document.createElement('b');b.textContent=r.date+' · '+r.name;const p=document.createElement('div');p.textContent=(r.items||[]).join(' | ');main.append(b,p);const actions=document.createElement('div');actions.className='entry-actions';const edit=document.createElement('button');edit.type='button';edit.className='edit-one';edit.textContent='✎';edit.title='Modifica questa registrazione';edit.setAttribute('aria-label','Modifica registrazione');edit.onclick=()=>startEdit(index);const del=document.createElement('button');del.type='button';del.className='delete-one';del.textContent='🗑';del.setAttribute('aria-label','Elimina registrazione');del.title='Elimina questa registrazione';del.onclick=()=>{if(confirm('Eliminare questa singola registrazione?')){const latest=getRecords();latest.splice(index,1);localStorage.setItem('gpps_records',JSON.stringify(latest));if(editingIndex===index)resetForm();render()}};actions.append(edit,del);d.append(main,actions);$('records').append(d)});updateRepCount()}
 $('save').onclick=()=>{
  const name=$('name').value.trim();if(!name){alert('Inserisci il nome dell’operatore.');$('name').focus();return}
  localStorage.setItem('gpps_name',name);const items=[];
  if(selected.turni)items.push('Turno: '+selected.turni);
+ if(selected.rep)items.push('Reperibilità (REP.)');
  if(selected.ferie?.length)items.push('Ferie/permessi: '+selected.ferie.join(', '));
  if(selected.luogo||selected.opturno){if(!selected.luogo||!selected.opturno){alert('Per O.P. seleziona luogo e turno.');return}items.push('O.P.: '+selected.luogo+' – '+selected.opturno)}
- if($('nemesi').value.trim()||$('titolo').value.trim())items.push('Sopralluogo: Nemesi '+$('nemesi').value.trim()+' – '+$('titolo').value.trim());
+ if($('nemesi').value.trim()||$('tipologia').value)items.push('Sopralluogo: Nemesi '+$('nemesi').value.trim()+' – Tipologia: '+$('tipologia').value);
  if(!items.length){alert('Seleziona almeno un’attività.');return}
- const a=getRecords();a.push({name,date:$('date').value||today(),items});localStorage.setItem('gpps_records',JSON.stringify(a));
- document.querySelectorAll('.on').forEach(x=>x.classList.remove('on'));Object.keys(selected).forEach(k=>delete selected[k]);
- $('nemesi').value='';$('titolo').value='';render();alert('Registrazione salvata su questo dispositivo.')
+ const a=getRecords(),record={name,date:$('date').value||today(),items},wasEditing=editingIndex!==null;if(editingIndex!==null){if(!a[editingIndex]){alert('La registrazione da modificare non è più disponibile.');resetForm();render();return}a[editingIndex]=record}else{a.push(record)}localStorage.setItem('gpps_records',JSON.stringify(a));resetForm();render();alert(wasEditing?'Modifiche salvate.':'Registrazione salvata su questo dispositivo.')
 };
-$('csv').onclick=()=>{
- const a=getRecords();if(!a.length){alert('Nessun dato da esportare.');return}
- const rows=[['Data','Operatore','Attività'],...a.map(r=>[r.date,r.name,r.items.join(' | ')])];
- const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');
- const u=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const x=document.createElement('a');x.href=u;x.download='GPPS-Rimini.csv';x.click();URL.revokeObjectURL(u)
-};
+$('cancelEdit').onclick=()=>{resetForm();render()};
+$('csv').onclick=()=>{const a=getRecords();if(!a.length){alert('Nessun dato da esportare.');return}const rows=[['Data','Operatore','Attività'],...a.map(r=>[r.date,r.name,(r.items||[]).join(' | ')])];const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');const u=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const x=document.createElement('a');x.href=u;x.download='GPPS-Rimini.csv';x.click();URL.revokeObjectURL(u)};
 $('clear').onclick=()=>{if(confirm('Cancellare tutte le registrazioni su questo dispositivo?')){localStorage.removeItem('gpps_records');render()}};
 render();
 </script>
